@@ -208,6 +208,7 @@ func NewTracer(config *config.Config) (Tracer, error) {
 			},
 		},
 		DefaultKProbeMaxActive: maxActive,
+		BypassEnabled:          config.BypassEnabled,
 	}
 
 	begin, end := network.EphemeralRange()
