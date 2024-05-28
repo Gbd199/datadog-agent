@@ -257,8 +257,8 @@ func (agg *FlowAggregator) flush() int {
 	sequenceDeltaPerExporter := agg.getSequenceDelta(flowsToFlush)
 	for key, seqDelta := range sequenceDeltaPerExporter {
 		tags := []string{"device_namespace:" + key.Namespace, "exporter_ip:" + key.ExporterIP, "flow_type:" + string(key.FlowType)}
-		agg.sender.Count("datadog.netflow.aggregator.sequence.delta", float64(seqDelta.Delta), "", tags)
-		agg.sender.Gauge("datadog.netflow.aggregator.sequence.last", float64(seqDelta.LastSequence), "", tags)
+		agg.sender.Count("datadog.netflow.aggregator.sequence.delta", float64(seqDelta.Delta), "", tags)       // JMW
+		agg.sender.Gauge("datadog.netflow.aggregator.sequence.last", float64(seqDelta.LastSequence), "", tags) // JMW
 		if seqDelta.Reset {
 			agg.sender.Count("datadog.netflow.aggregator.sequence.reset", float64(1), "", tags)
 		}

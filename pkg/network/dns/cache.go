@@ -46,7 +46,7 @@ type reverseDNSCache struct {
 	oversizedLogLimit *log.Limit
 }
 
-func newReverseDNSCache(size int, expirationPeriod time.Duration) *reverseDNSCache {
+func newReverseDNSCache(size int, expirationPeriod time.Duration) *reverseDNSCache { // JMW
 	cache := &reverseDNSCache{
 		data:              make(map[util.Address]*dnsCacheVal),
 		exit:              make(chan struct{}),
