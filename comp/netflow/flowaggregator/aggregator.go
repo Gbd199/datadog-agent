@@ -145,6 +145,7 @@ func (agg *FlowAggregator) sendFlows(flows []*common.Flow, flushTime time.Time) 
 			continue
 		}
 
+		agg.logger.Infof("JMW flushed flow: %s", string(payloadBytes))
 		agg.logger.Tracef("flushed flow: %s", string(payloadBytes))
 
 		m := message.NewMessage(payloadBytes, nil, "", 0)

@@ -63,6 +63,9 @@ type Flow struct {
 	SrcMask uint32
 	DstMask uint32
 
+	// JMW add SrcRdnsDomain
+	// JMW add DstRdnsDomain
+
 	// Ethernet information
 	Tos uint32 // FLOW KEY
 
@@ -103,22 +106,24 @@ var (
 	Hex FieldType = "hex"
 	// DefaultFieldTypes contains types for default payload fields
 	DefaultFieldTypes = map[string]FieldType{
-		"direction":         Integer,
-		"start":             Integer,
-		"end":               Integer,
-		"bytes":             Integer,
-		"packets":           Integer,
-		"ether_type":        Integer,
-		"ip_protocol":       Integer,
-		"exporter.ip":       Hex,
-		"source.ip":         Hex,
-		"source.port":       Integer,
-		"source.mac":        Integer,
-		"source.mask":       Integer,
-		"destination.ip":    Hex,
-		"destination.port":  Integer,
-		"destination.mac":   Integer,
-		"destination.mask":  Integer,
+		"direction":   Integer,
+		"start":       Integer,
+		"end":         Integer,
+		"bytes":       Integer,
+		"packets":     Integer,
+		"ether_type":  Integer,
+		"ip_protocol": Integer,
+		"exporter.ip": Hex,
+		"source.ip":   Hex,
+		"source.port": Integer,
+		"source.mac":  Integer,
+		"source.mask": Integer,
+		// JMW add source.rdns_domain
+		"destination.ip":   Hex,
+		"destination.port": Integer,
+		"destination.mac":  Integer,
+		"destination.mask": Integer,
+		// JMW add destination.rdns_domain
 		"ingress.interface": Integer,
 		"egress.interface":  Integer,
 		"tcp_flags":         Integer,

@@ -24,6 +24,8 @@ type Endpoint struct {
 	Port string `json:"port"` // Port number can be zero/positive or `*` (ephemeral port)
 	Mac  string `json:"mac"`
 	Mask string `json:"mask"`
+	// JMW add to Endpoint (similar to where geoip is added in backend) or somewhere else?
+	RdnsDomain string `json:"rdns_domain"`
 }
 
 // NextHop contains next hop details
