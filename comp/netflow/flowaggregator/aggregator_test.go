@@ -96,7 +96,8 @@ func TestAggregator(t *testing.T) {
     "ip": "10.10.10.20",
     "port": "80",
     "mac": "00:00:00:00:00:00",
-    "mask": "0.0.0.0/0"
+    "mask": "0.0.0.0/0",
+    "rdns_domain": "jmw-test-destination-domain.com"
   },
   "device": {
     "namespace": "my-ns"
@@ -129,7 +130,8 @@ func TestAggregator(t *testing.T) {
     "ip": "10.10.10.10",
     "port": "2000",
     "mac": "00:00:00:00:00:00",
-    "mask": "0.0.0.0/0"
+    "mask": "0.0.0.0/0",
+    "rdns_domain": "jmw-test-source-domain.com"
   },
   "start": 1234568,
   "tcp_flags": [
