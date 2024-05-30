@@ -63,8 +63,8 @@ type Flow struct {
 	SrcMask uint32
 	DstMask uint32
 
-	// JMW add SrcRdnsDomain
-	// JMW add DstRdnsDomain
+	// JMW add SrcRdnsDomain string
+	// JMW add DstRdnsDomain string
 
 	// Ethernet information
 	Tos uint32 // FLOW KEY

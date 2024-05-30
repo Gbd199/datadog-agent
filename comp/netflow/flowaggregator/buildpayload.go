@@ -35,18 +35,18 @@ func buildPayload(aggFlow *common.Flow, hostname string, flushTime time.Time) pa
 		EtherType:  format.EtherType(aggFlow.EtherType),
 		IPProtocol: format.IPProtocol(aggFlow.IPProtocol),
 		Source: payload.Endpoint{
-			IP:         format.IPAddr(aggFlow.SrcAddr),
-			Port:       format.Port(aggFlow.SrcPort),
-			Mac:        format.MacAddress(aggFlow.SrcMac),
-			Mask:       format.CIDR(aggFlow.SrcAddr, aggFlow.SrcMask),
-			RdnsDomain: "jmw-test-source-domain.com",
+			IP:   format.IPAddr(aggFlow.SrcAddr),
+			Port: format.Port(aggFlow.SrcPort),
+			Mac:  format.MacAddress(aggFlow.SrcMac),
+			Mask: format.CIDR(aggFlow.SrcAddr, aggFlow.SrcMask),
+			// JMWT RdnsDomain: "jmw-test-source-domain.com",
 		},
 		Destination: payload.Endpoint{
-			IP:         format.IPAddr(aggFlow.DstAddr),
-			Port:       format.Port(aggFlow.DstPort),
-			Mac:        format.MacAddress(aggFlow.DstMac),
-			Mask:       format.CIDR(aggFlow.DstAddr, aggFlow.DstMask),
-			RdnsDomain: "jmw-test-destination-domain.com",
+			IP:   format.IPAddr(aggFlow.DstAddr),
+			Port: format.Port(aggFlow.DstPort),
+			Mac:  format.MacAddress(aggFlow.DstMac),
+			Mask: format.CIDR(aggFlow.DstAddr, aggFlow.DstMask),
+			// JMWT RdnsDomain: "jmw-test-destination-domain.com",
 		},
 		Ingress: payload.ObservationPoint{
 			Interface: payload.Interface{

@@ -102,6 +102,13 @@ func (f *flowAccumulator) flush() []*common.Flow {
 	return flowsToFlush
 }
 
+// JMWADD rDNSCache to flowAccumulator
+// JMWADD resolveHostnames()
+// func (f *flowAccumulator) resolveHostnames(flow *common.Flow) {
+//	flow.SrcRdnsDomain = f.rDNSCache.Get(flow.SrcAddr)
+//	flow.DstRdnsDomain = f.rDNSCache.Get(flow.DstAddr)
+//}
+
 func (f *flowAccumulator) add(flowToAdd *common.Flow) {
 	f.logger.Tracef("Add new flow: %+v", flowToAdd)
 
@@ -116,6 +123,13 @@ func (f *flowAccumulator) add(flowToAdd *common.Flow) {
 			flowToAdd.DstPort = portrollup.EphemeralPort
 		}
 	}
+
+	// JMW - Enabled or Disabled, like portRollupDisabled?
+	// JMW should flowAccumulator resolve hostnames or should it be done before calling add()?  I think goflow sends it to the channel, received in FlowAggregator::run(), and then add() is called.
+	// if f.rDNSEnabled {
+	// 	// Resolve source and destination IP addresses to hostnames JMWCO
+	// 	f.resolveHostnames(flowToAdd) // JMWCO
+	// }
 
 	f.flowsMutex.Lock()
 	defer f.flowsMutex.Unlock()

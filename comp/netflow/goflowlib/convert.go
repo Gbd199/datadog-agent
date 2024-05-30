@@ -45,7 +45,7 @@ func ConvertFlow(srcFlow *flowpb.FlowMessage, namespace string) *common.Flow {
 	}
 }
 
-// ConvertFlowWithAdditionalFields convert goflow flow structure and additional fields to internal flow structure
+// ConvertFlowWithAdditionalFields convert goflow flow structure and additional fields to internal flow structure // JMW what are additional fields?
 func ConvertFlowWithAdditionalFields(srcFlow *common.FlowMessageWithAdditionalFields, namespace string) *common.Flow {
 	flow := ConvertFlow(srcFlow.FlowMessage, namespace)
 	applyAdditionalFields(flow, srcFlow.AdditionalFields)
@@ -91,7 +91,7 @@ func applyAdditionalFields(flow *common.Flow, additionalFields common.Additional
 }
 
 func applyAdditionalField(flow *common.Flow, destination string, fieldValue any) bool {
-	// Make sure FlowFieldsTypes includes the type of the following fields
+	// Make sure FlowFieldsTypes includes the type of the following fields // JMW
 	switch destination {
 	case "direction":
 		setInt(&flow.Direction, fieldValue)
@@ -119,6 +119,7 @@ func applyAdditionalField(flow *common.Flow, destination string, fieldValue any)
 		setInt(&flow.SrcMac, fieldValue)
 	case "source.mask":
 		setInt(&flow.SrcMask, fieldValue)
+	// JMW case "source.rdns.domain":
 	case "destination.ip":
 		setBytes(&flow.DstAddr, fieldValue)
 	case "destination.port":
@@ -129,6 +130,7 @@ func applyAdditionalField(flow *common.Flow, destination string, fieldValue any)
 		setInt(&flow.DstMac, fieldValue)
 	case "destination.mask":
 		setInt(&flow.DstMask, fieldValue)
+	// JMW case "destination.rdns.domain":
 	case "ingress.interface":
 		setInt(&flow.InputInterface, fieldValue)
 	case "egress.interface":
