@@ -13,6 +13,8 @@ import (
 	"github.com/DataDog/datadog-agent/comp/netflow/payload"
 )
 
+// JMWJMW add rDNS enrichment to common.Flow and payload.FlowPayload??
+// JMWJMW re: tags vs fields, do we even support tags in NetFlow currently?  If not should we add them anyways?
 func buildPayload(aggFlow *common.Flow, hostname string, flushTime time.Time) payload.FlowPayload {
 	return payload.FlowPayload{
 		// TODO: Implement Tos
@@ -59,6 +61,6 @@ func buildPayload(aggFlow *common.Flow, hostname string, flushTime time.Time) pa
 		NextHop: payload.NextHop{
 			IP: format.IPAddr(aggFlow.NextHop),
 		},
-		AdditionalFields: aggFlow.AdditionalFields,
+		AdditionalFields: aggFlow.AdditionalFields, // JMW what are aggFlow.AdditionalFields?
 	}
 }

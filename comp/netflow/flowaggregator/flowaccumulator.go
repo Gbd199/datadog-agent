@@ -38,7 +38,7 @@ type flowAccumulator struct {
 	portRollupThreshold int
 	portRollupDisabled  bool
 
-	hashCollisionFlowCount *atomic.Uint64
+	hashCollisionFlowCount *atomic.Uint64 // JMW when and why would hashCollisionFlowCount be incremented?
 
 	logger log.Component
 }
@@ -74,6 +74,7 @@ func newFlowAccumulator(aggregatorFlushInterval time.Duration, aggregatorFlowCon
 // We need to keep flowContext (contains `nextFlush` and `lastSuccessfulFlush`) after flush
 // to be able to flush at regular interval (`flowFlushInterval`).
 // Example, after a flush, flowContext will have a new nextFlush, that will be the next flush time for new flows being added.
+// JMWFROMHERE
 func (f *flowAccumulator) flush() []*common.Flow {
 	f.flowsMutex.Lock()
 	defer f.flowsMutex.Unlock()

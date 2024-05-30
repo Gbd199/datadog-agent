@@ -129,7 +129,7 @@ func (agg *FlowAggregator) run() {
 			return
 		case flow := <-agg.flowIn:
 			agg.receivedFlowCount.Inc()
-			agg.flowAcc.add(flow)
+			agg.flowAcc.add(flow) // JMW add the flow to the agg.flowAcc
 		}
 	}
 }
@@ -148,7 +148,7 @@ func (agg *FlowAggregator) sendFlows(flows []*common.Flow, flushTime time.Time) 
 		agg.logger.Tracef("flushed flow: %s", string(payloadBytes))
 
 		m := message.NewMessage(payloadBytes, nil, "", 0)
-		err = agg.epForwarder.SendEventPlatformEventBlocking(m, eventplatform.EventTypeNetworkDevicesNetFlow)
+		err = agg.epForwarder.SendEventPlatformEventBlocking(m, eventplatform.EventTypeNetworkDevicesNetFlow) // JMW send flow via EP Forwarder
 		if err != nil {
 			// at the moment, SendEventPlatformEventBlocking can only fail if the event type is invalid
 			agg.logger.Errorf("Error sending to event platform forwarder: %s", err)
@@ -232,13 +232,13 @@ func (agg *FlowAggregator) flushLoop() {
 			now := time.Now()
 			if !lastFlushTime.IsZero() {
 				flushInterval := now.Sub(lastFlushTime)
-				agg.sender.Gauge("datadog.netflow.aggregator.flush_interval", flushInterval.Seconds(), "", nil)
+				agg.sender.Gauge("datadog.netflow.aggregator.flush_interval", flushInterval.Seconds(), "", nil) // JMW flush_interval telemetry
 			}
 			lastFlushTime = now
 
 			flushStartTime := time.Now()
 			agg.flush()
-			agg.sender.Gauge("datadog.netflow.aggregator.flush_duration", time.Since(flushStartTime).Seconds(), "", nil)
+			agg.sender.Gauge("datadog.netflow.aggregator.flush_duration", time.Since(flushStartTime).Seconds(), "", nil) // JMW flush_duration telemetry
 			agg.sender.Commit()
 		// refresh rollup trackers
 		case <-rollupTrackersRefresh:
@@ -257,10 +257,10 @@ func (agg *FlowAggregator) flush() int {
 	sequenceDeltaPerExporter := agg.getSequenceDelta(flowsToFlush)
 	for key, seqDelta := range sequenceDeltaPerExporter {
 		tags := []string{"device_namespace:" + key.Namespace, "exporter_ip:" + key.ExporterIP, "flow_type:" + string(key.FlowType)}
-		agg.sender.Count("datadog.netflow.aggregator.sequence.delta", float64(seqDelta.Delta), "", tags)       // JMW
-		agg.sender.Gauge("datadog.netflow.aggregator.sequence.last", float64(seqDelta.LastSequence), "", tags) // JMW
+		agg.sender.Count("datadog.netflow.aggregator.sequence.delta", float64(seqDelta.Delta), "", tags)       // JMW telemetry
+		agg.sender.Gauge("datadog.netflow.aggregator.sequence.last", float64(seqDelta.LastSequence), "", tags) // JMW telemetry
 		if seqDelta.Reset {
-			agg.sender.Count("datadog.netflow.aggregator.sequence.reset", float64(1), "", tags)
+			agg.sender.Count("datadog.netflow.aggregator.sequence.reset", float64(1), "", tags) // JMW telemetry
 		}
 	}
 
@@ -272,6 +272,7 @@ func (agg *FlowAggregator) flush() int {
 
 	flushCount := len(flowsToFlush)
 
+	//JMW telemetry
 	agg.sender.MonotonicCount("datadog.netflow.aggregator.hash_collisions", float64(agg.flowAcc.hashCollisionFlowCount.Load()), "", nil)
 	agg.sender.MonotonicCount("datadog.netflow.aggregator.flows_received", float64(agg.receivedFlowCount.Load()), "", nil)
 	agg.sender.Count("datadog.netflow.aggregator.flows_flushed", float64(flushCount), "", nil)
@@ -292,6 +293,7 @@ func (agg *FlowAggregator) flush() int {
 	return len(flowsToFlush)
 }
 
+// JMWFROMHERE
 // getSequenceDelta return the delta of current sequence number compared to previously saved sequence number
 // Since we track per exporterIP, the returned delta is only accurate when for the specific exporterIP there is
 // only one NetFlow9/IPFIX observation domain, NetFlow5 engineType/engineId, sFlow agent/subagent.
