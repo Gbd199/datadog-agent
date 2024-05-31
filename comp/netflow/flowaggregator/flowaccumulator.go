@@ -109,7 +109,8 @@ func (f *flowAccumulator) flush() []*common.Flow {
 //	flow.DstRdnsDomain = f.rDNSCache.Get(flow.DstAddr)
 //}
 
-func (f *flowAccumulator) add(flowToAdd *common.Flow) {
+func (f *flowAccumulator) add(flowToAdd *common.Flow) { // JMW2
+	f.logger.Debugf("JMW Add new flow: %+v", flowToAdd)
 	f.logger.Tracef("Add new flow: %+v", flowToAdd)
 
 	if !f.portRollupDisabled {
@@ -143,12 +144,13 @@ func (f *flowAccumulator) add(flowToAdd *common.Flow) {
 	if aggFlow.flow == nil {
 		aggFlow.flow = flowToAdd
 	} else {
-		// use go routine for has collision detection to avoid blocking critical path
+		// use go routine for hash collision detection to avoid blocking critical path
 		go f.detectHashCollision(aggHash, *aggFlow.flow, *flowToAdd)
 
 		// accumulate flowToAdd with existing flow(s) with same hash
 		aggFlow.flow.Bytes += flowToAdd.Bytes
 		aggFlow.flow.Packets += flowToAdd.Packets
+		// JMW add metrics here to count if/when aggregation of overlapping timeslots occur
 		aggFlow.flow.StartTimestamp = common.Min(aggFlow.flow.StartTimestamp, flowToAdd.StartTimestamp)
 		aggFlow.flow.EndTimestamp = common.Max(aggFlow.flow.EndTimestamp, flowToAdd.EndTimestamp)
 		aggFlow.flow.SequenceNum = common.Max(aggFlow.flow.SequenceNum, flowToAdd.SequenceNum)
@@ -163,6 +165,7 @@ func (f *flowAccumulator) add(flowToAdd *common.Flow) {
 			for field, value := range flowToAdd.AdditionalFields {
 				if _, ok := aggFlow.flow.AdditionalFields[field]; !ok {
 					aggFlow.flow.AdditionalFields[field] = value
+					f.logger.Debugf("JMW Added additional field `%s` = value `%v` to flow", field, value)
 				}
 			}
 		}
@@ -180,6 +183,6 @@ func (f *flowAccumulator) getFlowContextCount() int {
 func (f *flowAccumulator) detectHashCollision(hash uint64, existingFlow common.Flow, flowToAdd common.Flow) {
 	if !common.IsEqualFlowContext(existingFlow, flowToAdd) {
 		f.logger.Warnf("Hash collision for flows with hash `%d`: existingFlow=`%+v` flowToAdd=`%+v`", hash, existingFlow, flowToAdd)
-		f.hashCollisionFlowCount.Inc()
+		f.hashCollisionFlowCount.Inc() // JMW this becomes metric: datadog.netflow.aggregator.hash_collisions
 	}
 }

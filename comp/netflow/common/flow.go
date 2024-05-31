@@ -15,6 +15,7 @@ import (
 
 // Flow contains flow info used for aggregation
 // json annotations are used in AsJSONString() for debugging purpose
+// JMWFLOW
 type Flow struct {
 	Namespace    string
 	FlowType     FlowType
@@ -63,8 +64,11 @@ type Flow struct {
 	SrcMask uint32
 	DstMask uint32
 
-	// JMW add SrcRdnsDomain string
-	// JMW add DstRdnsDomain string
+	// JMWADDED
+	// Reverse DNS enrichement JMW OR add to AdditionalFields?
+	// JMW these do not come from the FlowMessage, but are enrichments added during flow aggregation processing
+	SrcRdnsDomain string
+	DstRdnsDomain string
 
 	// Ethernet information
 	Tos uint32 // FLOW KEY
@@ -80,8 +84,8 @@ type AdditionalFields = map[string]any
 
 // FlowMessageWithAdditionalFields contains a goflow flowmessage and additional fields
 type FlowMessageWithAdditionalFields struct {
-	*flowmessage.FlowMessage
-	AdditionalFields AdditionalFields
+	*flowmessage.FlowMessage // JMWJMW is flowmessage.FlowMessage identical to common.Flow? - NO - see goflowlib ConvertFlow()
+	AdditionalFields         AdditionalFields
 }
 
 // EndianType is used to configure additional fields endianness

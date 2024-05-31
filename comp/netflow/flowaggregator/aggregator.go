@@ -129,7 +129,7 @@ func (agg *FlowAggregator) run() {
 			return
 		case flow := <-agg.flowIn:
 			agg.receivedFlowCount.Inc()
-			agg.flowAcc.add(flow) // JMW add the flow to the agg.flowAcc
+			agg.flowAcc.add(flow) // JMW1 add the flow to the agg.flowAcc
 		}
 	}
 }
