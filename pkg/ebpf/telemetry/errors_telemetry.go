@@ -71,10 +71,12 @@ type EBPFTelemetry struct {
 	probeKeys    map[string]uint64
 }
 
+// Lock is part of the Locker interface implementation.
 func (e *EBPFTelemetry) Lock() {
 	e.mtx.Lock()
 }
 
+// Unlock is part of the Locker interface implementation.
 func (e *EBPFTelemetry) Unlock() {
 	e.mtx.Unlock()
 }
