@@ -1535,7 +1535,7 @@ func testRedisProtocolClassificationInner(t *testing.T, tr *Tracer, clientHost, 
 	}
 
 	redisTeardown := func(t *testing.T, ctx testContext) {
-		redis.NewClient(ctx.serverAddress, defaultDialer)
+		redis.NewClient(ctx.serverAddress, defaultDialer, withTLS)
 		client := ctx.extras["client"].(*redis2.Client)
 		timedContext, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 		defer cancel()
@@ -1557,7 +1557,7 @@ func testRedisProtocolClassificationInner(t *testing.T, tr *Tracer, clientHost, 
 				extras:        make(map[string]interface{}),
 			},
 			preTracerSetup: func(t *testing.T, ctx testContext) {
-				client := redis.NewClient(ctx.targetAddress, defaultDialer)
+				client := redis.NewClient(ctx.targetAddress, defaultDialer, withTLS)
 				timedContext, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 				defer cancel()
 				client.Ping(timedContext)
@@ -1581,7 +1581,7 @@ func testRedisProtocolClassificationInner(t *testing.T, tr *Tracer, clientHost, 
 				extras:        make(map[string]interface{}),
 			},
 			preTracerSetup: func(t *testing.T, ctx testContext) {
-				client := redis.NewClient(ctx.targetAddress, defaultDialer)
+				client := redis.NewClient(ctx.targetAddress, defaultDialer, withTLS)
 				timedContext, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 				defer cancel()
 				client.Set(timedContext, "key", "value", time.Minute)
@@ -1608,7 +1608,7 @@ func testRedisProtocolClassificationInner(t *testing.T, tr *Tracer, clientHost, 
 				extras:        make(map[string]interface{}),
 			},
 			preTracerSetup: func(t *testing.T, ctx testContext) {
-				client := redis.NewClient(ctx.targetAddress, defaultDialer)
+				client := redis.NewClient(ctx.targetAddress, defaultDialer, withTLS)
 				timedContext, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 				defer cancel()
 				client.Ping(timedContext)
@@ -1651,7 +1651,7 @@ func testRedisProtocolClassificationInner(t *testing.T, tr *Tracer, clientHost, 
 				extras:        make(map[string]interface{}),
 			},
 			preTracerSetup: func(t *testing.T, ctx testContext) {
-				client := redis.NewClient(ctx.targetAddress, defaultDialer)
+				client := redis.NewClient(ctx.targetAddress, defaultDialer, withTLS)
 				timedContext, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 				defer cancel()
 				client.Ping(timedContext)
