@@ -219,8 +219,9 @@ def upload_junitxmls(team_dir: Path):
         processes.append(Popen(DATADOG_CI_COMMAND + args, bufsize=-1, env=process_env, stdout=PIPE, stderr=PIPE))
 
     for process in processes:
-        _, stderr = process.communicate()
+        stdout, stderr = process.communicate()
         print(f" Uploaded {len(tuple(team_dir.iterdir()))} files for {team_dir.name}")
+        print(stdout)
         if stderr:
             print(f"Failed uploading junit:\n{stderr}", file=os.sys.stderr)
             raise CalledProcessError(process.returncode, DATADOG_CI_COMMAND)
