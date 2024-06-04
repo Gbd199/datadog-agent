@@ -49,6 +49,7 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/network/protocols/mysql"
 	pgutils "github.com/DataDog/datadog-agent/pkg/network/protocols/postgres"
 	"github.com/DataDog/datadog-agent/pkg/network/protocols/redis"
+	protocolsUtils "github.com/DataDog/datadog-agent/pkg/network/protocols/testutil"
 	gotlstestutil "github.com/DataDog/datadog-agent/pkg/network/protocols/tls/gotls/testutil"
 	prototls "github.com/DataDog/datadog-agent/pkg/network/protocols/tls/openssl"
 	"github.com/DataDog/datadog-agent/pkg/network/tracer/connection"
@@ -425,7 +426,7 @@ func testTLSClassification(t *testing.T, tr *Tracer, clientHost, targetHost, ser
 		}{
 			{"amqp", testTLSAMQPProtocolClassification},
 			{"HTTP", testHTTPSClassification},
-			{"postgres", testPostgresProtocolClassificationWrapper(pgutils.TLSEnabled)},
+			{"postgres", testPostgresProtocolClassificationWrapper(protocolsUtils.TLSEnabled)},
 			{"redis", testTLSRedisProtocolClassification},
 		}
 
@@ -1515,14 +1516,14 @@ func testMongoProtocolClassification(t *testing.T, tr *Tracer, clientHost, targe
 }
 
 func testRedisProtocolClassification(t *testing.T, tr *Tracer, clientHost, targetHost, serverHost string) {
-	testRedisProtocolClassificationInner(t, tr, clientHost, targetHost, serverHost, redis.Plaintext)
+	testRedisProtocolClassificationInner(t, tr, clientHost, targetHost, serverHost, protocolsUtils.TLSDisabled)
 }
 
 func testTLSRedisProtocolClassification(t *testing.T, tr *Tracer, clientHost, targetHost, serverHost string) {
-	testRedisProtocolClassificationInner(t, tr, clientHost, targetHost, serverHost, redis.TLS)
+	testRedisProtocolClassificationInner(t, tr, clientHost, targetHost, serverHost, protocolsUtils.TLSEnabled)
 }
 
-func testRedisProtocolClassificationInner(t *testing.T, tr *Tracer, clientHost, targetHost, serverHost string, withTLS redis.TLSSetting) {
+func testRedisProtocolClassificationInner(t *testing.T, tr *Tracer, clientHost, targetHost, serverHost string, withTLS bool) {
 	skipFuncs := []func(*testing.T, testContext){
 		skipIfUsingNAT,
 	}
@@ -1702,11 +1703,11 @@ func testRedisProtocolClassificationInner(t *testing.T, tr *Tracer, clientHost, 
 }
 
 func testTLSAMQPProtocolClassification(t *testing.T, tr *Tracer, clientHost, targetHost, serverHost string) {
-	testAMQPProtocolClassificationInner(t, tr, clientHost, targetHost, serverHost, amqp.TLS)
+	testAMQPProtocolClassificationInner(t, tr, clientHost, targetHost, serverHost, protocolsUtils.TLSEnabled)
 }
 
 func testAMQPProtocolClassification(t *testing.T, tr *Tracer, clientHost, targetHost, serverHost string) {
-	testAMQPProtocolClassificationInner(t, tr, clientHost, targetHost, serverHost, amqp.Plaintext)
+	testAMQPProtocolClassificationInner(t, tr, clientHost, targetHost, serverHost, protocolsUtils.TLSDisabled)
 }
 
 type amqpTestSpec struct {
@@ -1717,7 +1718,7 @@ type amqpTestSpec struct {
 }
 
 var amqpTestSpecsMap = map[bool]amqpTestSpec{
-	amqp.Plaintext: {
+	protocolsUtils.TLSDisabled: {
 		port:               amqpPort,
 		classifiedStack:    &protocols.Stack{Application: protocols.AMQP},
 		nonClassifiedStack: &protocols.Stack{},
@@ -1725,7 +1726,7 @@ var amqpTestSpecsMap = map[bool]amqpTestSpec{
 			skipIfUsingNAT,
 		},
 	},
-	amqp.TLS: {
+	protocolsUtils.TLSEnabled: {
 		port:               amqpsPort,
 		classifiedStack:    &protocols.Stack{Encryption: protocols.TLS, Application: protocols.AMQP},
 		nonClassifiedStack: &protocols.Stack{Encryption: protocols.TLS},
@@ -2167,7 +2168,7 @@ func testProtocolClassificationLinux(t *testing.T, tr *Tracer, clientHost, targe
 		},
 		{
 			name:     "postgres",
-			testFunc: testPostgresProtocolClassificationWrapper(pgutils.TLSDisabled),
+			testFunc: testPostgresProtocolClassificationWrapper(protocolsUtils.TLSDisabled),
 		},
 		{
 			name:     "mongo",
