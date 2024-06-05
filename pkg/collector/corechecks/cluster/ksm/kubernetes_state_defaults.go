@@ -214,6 +214,14 @@ func defaultLabelJoins() map[string]*JoinsConfigWithoutLabelsMapping {
 			LabelsToMatch: getLabelToMatchForKind("node"),
 			LabelsToGet:   []string{"container_runtime_version", "kernel_version", "kubelet_version", "os_image"},
 		},
+		"kube_node_status_allocatable": {
+			LabelsToMatch: getLabelToMatchForKind("node"),
+			LabelsToGet:   []string{"cpu", "memory", "gpu", "mig"},
+		},
+		"kube_node_status_capacity": {
+			LabelsToMatch: getLabelToMatchForKind("node"),
+			LabelsToGet:   []string{"cpu", "memory", "gpu", "mig"},
+		},
 	}
 }
 

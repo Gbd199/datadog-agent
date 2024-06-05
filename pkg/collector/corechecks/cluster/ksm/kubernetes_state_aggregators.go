@@ -9,6 +9,8 @@ package ksm
 
 import (
 	"fmt"
+	"slices"
+	"strings"
 
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
 	ksmstore "github.com/DataDog/datadog-agent/pkg/kubestatemetrics/store"
@@ -18,7 +20,7 @@ import (
 )
 
 type metricAggregator interface {
-	accumulate(ksmstore.DDMetric)
+	accumulate(ksmstore.DDMetric, *labelJoiner)
 	flush(sender.Sender, *KSMCheck, *labelJoiner)
 }
 
@@ -29,12 +31,72 @@ type metricAggregator interface {
 // in the code and cannot be arbitrarily set by the end-user.
 const maxNumberOfAllowedLabels = 4
 
+const accumulateDelimiter = "|"
+
+// accumulateKey is a key used to accumulate metrics in the aggregator.
+// Go does not allow slices or map as valid map keys, so we use a string representation of the keys and values.
+type accumulateKey struct {
+	keys   string
+	values string
+}
+
+// func makeAccumulateKey(kv map[string]string) accumulateKey {
+// 	keys := make([]string, len(kv))
+// 	vals := make([]string, len(kv))
+// 	i := 0
+// 	for k, v := range kv {
+// 		keys[i] = k
+// 		vals[i] = v
+// 		i++
+// 	}
+// 	slices.Sort(keys)
+// 	slices.Sort(vals)
+// 	return accumulateKey{
+// 		keys:   strings.Join(keys, accumulateDelimiter),
+// 		values: strings.Join(vals, accumulateDelimiter),
+// 	}
+// }
+
+func makeAccumulateKey(labels []label) accumulateKey {
+	keys := make([]string, len(labels))
+	vals := make([]string, len(labels))
+	for i, l := range labels {
+		keys[i] = l.key
+		vals[i] = l.value
+	}
+	slices.Sort(keys)
+	slices.Sort(vals)
+	return accumulateKey{
+		keys:   strings.Join(keys, accumulateDelimiter),
+		values: strings.Join(vals, accumulateDelimiter),
+	}
+}
+
+func (a accumulateKey) labels() map[string]string {
+	keys := strings.Split(a.keys, accumulateDelimiter)
+	values := strings.Split(a.values, accumulateDelimiter)
+	if len(keys) != len(values) {
+		log.Errorf("BUG in KSM metric aggregator: keys and values have different lengths")
+		return nil
+	}
+	labels := make(map[string]string, len(keys))
+	for i := range keys {
+		// Keys and values must be sorted.
+		labels[keys[i]] = values[i]
+	}
+	log.Infof("Raw accumulateKey: %#v", a)
+	log.Infof("Conveted accumulateKey: %#v", labels)
+	return labels
+
+}
+
 type counterAggregator struct {
 	ddMetricName  string
 	ksmMetricName string
 	allowedLabels []string
 
-	accumulator map[[maxNumberOfAllowedLabels]string]float64
+	accumulator  map[[maxNumberOfAllowedLabels]string]float64
+	accumulator2 map[accumulateKey]float64
 }
 
 type sumValuesAggregator struct {
@@ -93,6 +155,7 @@ func newSumValuesAggregator(ddMetricName, ksmMetricName string, allowedLabels []
 			ksmMetricName: ksmMetricName,
 			allowedLabels: allowedLabels,
 			accumulator:   make(map[[maxNumberOfAllowedLabels]string]float64),
+			accumulator2:  make(map[accumulateKey]float64),
 		},
 	}
 }
@@ -111,6 +174,7 @@ func newCountObjectsAggregator(ddMetricName, ksmMetricName string, allowedLabels
 			ksmMetricName: ksmMetricName,
 			allowedLabels: allowedLabels,
 			accumulator:   make(map[[maxNumberOfAllowedLabels]string]float64),
+			accumulator2:  make(map[accumulateKey]float64),
 		},
 	}
 }
@@ -144,7 +208,7 @@ func newLastCronJobAggregator() *lastCronJobAggregator {
 	}
 }
 
-func (a *sumValuesAggregator) accumulate(metric ksmstore.DDMetric) {
+func (a *sumValuesAggregator) accumulate(metric ksmstore.DDMetric, lj *labelJoiner) {
 	var labelValues [maxNumberOfAllowedLabels]string
 
 	for i, allowedLabel := range a.allowedLabels {
@@ -156,9 +220,12 @@ func (a *sumValuesAggregator) accumulate(metric ksmstore.DDMetric) {
 	}
 
 	a.accumulator[labelValues] += metric.Val
+	ls := lj.getLabelsToAdd(metric.Labels)
+	log.Infof("getLabelsToAdd in sumValuesAggregator: %#v", ls)
+	a.accumulator2[makeAccumulateKey(ls)] += metric.Val
 }
 
-func (a *countObjectsAggregator) accumulate(metric ksmstore.DDMetric) {
+func (a *countObjectsAggregator) accumulate(metric ksmstore.DDMetric, lj *labelJoiner) {
 	var labelValues [maxNumberOfAllowedLabels]string
 
 	for i, allowedLabel := range a.allowedLabels {
@@ -170,9 +237,12 @@ func (a *countObjectsAggregator) accumulate(metric ksmstore.DDMetric) {
 	}
 
 	a.accumulator[labelValues]++
+	ls := lj.getLabelsToAdd(metric.Labels)
+	log.Infof("getLabelsToAdd in countObjectsAggregator: %#v", ls)
+	a.accumulator2[makeAccumulateKey(ls)]++
 }
 
-func (a *resourceAggregator) accumulate(metric ksmstore.DDMetric) {
+func (a *resourceAggregator) accumulate(metric ksmstore.DDMetric, lj *labelJoiner) {
 	resource := renameResource(metric.Labels["resource"])
 
 	if _, ok := a.accumulators[resource]; !ok {
@@ -194,11 +264,11 @@ func (a *resourceAggregator) accumulate(metric ksmstore.DDMetric) {
 	}
 }
 
-func (a *lastCronJobCompleteAggregator) accumulate(metric ksmstore.DDMetric) {
+func (a *lastCronJobCompleteAggregator) accumulate(metric ksmstore.DDMetric, lj *labelJoiner) {
 	a.aggregator.accumulate(metric, servicecheck.ServiceCheckOK)
 }
 
-func (a *lastCronJobFailedAggregator) accumulate(metric ksmstore.DDMetric) {
+func (a *lastCronJobFailedAggregator) accumulate(metric ksmstore.DDMetric, lj *labelJoiner) {
 	a.aggregator.accumulate(metric, servicecheck.ServiceCheckCritical)
 }
 
@@ -235,6 +305,14 @@ func (a *lastCronJobAggregator) accumulate(metric ksmstore.DDMetric, state servi
 }
 
 func (a *counterAggregator) flush(sender sender.Sender, k *KSMCheck, labelJoiner *labelJoiner) {
+	for accumulatorKey, count := range a.accumulator2 {
+		hostname, tags := k.hostnameAndTags(accumulatorKey.labels(), labelJoiner, labelsMapperOverride(a.ksmMetricName))
+		metricName := ksmMetricPrefix + "experiment." + a.ddMetricName
+		log.Infof("name: %s, count: %f, hostname: %s, tags: %v", metricName, count, hostname, tags)
+		sender.Gauge(metricName, count, hostname, tags)
+	}
+	a.accumulator2 = make(map[accumulateKey]float64)
+
 	for labelValues, count := range a.accumulator {
 
 		labels := make(map[string]string)
