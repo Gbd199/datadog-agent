@@ -179,11 +179,11 @@ func defaultLabelJoins() map[string]*JoinsConfigWithoutLabelsMapping {
 		},
 		"kube_deployment_labels": {
 			LabelsToMatch: getLabelToMatchForKind("deployment"),
-			LabelsToGet:   defaultStandardLabels,
+			LabelsToGet:   append(defaultStandardLabels, []string{"namespace"}...),
 		},
 		"kube_replicaset_labels": {
 			LabelsToMatch: getLabelToMatchForKind("replicaset"),
-			LabelsToGet:   defaultStandardLabels,
+			LabelsToGet:   append(defaultStandardLabels, []string{"namespace", "owner_name", "owner_kind"}...),
 		},
 		"kube_daemonset_labels": {
 			LabelsToMatch: getLabelToMatchForKind("daemonset"),

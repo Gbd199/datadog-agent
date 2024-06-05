@@ -8,6 +8,7 @@
 package ksm
 
 import (
+	"cmp"
 	"fmt"
 	"slices"
 	"strings"
@@ -40,32 +41,16 @@ type accumulateKey struct {
 	values string
 }
 
-// func makeAccumulateKey(kv map[string]string) accumulateKey {
-// 	keys := make([]string, len(kv))
-// 	vals := make([]string, len(kv))
-// 	i := 0
-// 	for k, v := range kv {
-// 		keys[i] = k
-// 		vals[i] = v
-// 		i++
-// 	}
-// 	slices.Sort(keys)
-// 	slices.Sort(vals)
-// 	return accumulateKey{
-// 		keys:   strings.Join(keys, accumulateDelimiter),
-// 		values: strings.Join(vals, accumulateDelimiter),
-// 	}
-// }
-
 func makeAccumulateKey(labels []label) accumulateKey {
 	keys := make([]string, len(labels))
 	vals := make([]string, len(labels))
+	slices.SortFunc(labels, func(a, b label) int {
+		return cmp.Compare(a.key, b.key)
+	})
 	for i, l := range labels {
 		keys[i] = l.key
 		vals[i] = l.value
 	}
-	slices.Sort(keys)
-	slices.Sort(vals)
 	return accumulateKey{
 		keys:   strings.Join(keys, accumulateDelimiter),
 		values: strings.Join(vals, accumulateDelimiter),
@@ -308,7 +293,7 @@ func (a *counterAggregator) flush(sender sender.Sender, k *KSMCheck, labelJoiner
 	for accumulatorKey, count := range a.accumulator2 {
 		hostname, tags := k.hostnameAndTags(accumulatorKey.labels(), labelJoiner, labelsMapperOverride(a.ksmMetricName))
 		metricName := ksmMetricPrefix + "experiment." + a.ddMetricName
-		log.Infof("name: %s, count: %f, hostname: %s, tags: %v", metricName, count, hostname, tags)
+		log.Infof("EXPERIMENT | name: %s, count: %f, hostname: %s, tags: %v", metricName, count, hostname, tags)
 		sender.Gauge(metricName, count, hostname, tags)
 	}
 	a.accumulator2 = make(map[accumulateKey]float64)
@@ -325,10 +310,10 @@ func (a *counterAggregator) flush(sender sender.Sender, k *KSMCheck, labelJoiner
 		}
 
 		hostname, tags := k.hostnameAndTags(labels, labelJoiner, labelsMapperOverride(a.ksmMetricName))
-
-		sender.Gauge(ksmMetricPrefix+a.ddMetricName, count, hostname, tags)
+		metricName := ksmMetricPrefix + a.ddMetricName
+		log.Infof("PRODUCTION | name: %s, count: %f, hostname: %s, tags: %v", metricName, count, hostname, tags)
+		sender.Gauge(metricName, count, hostname, tags)
 	}
-
 	a.accumulator = make(map[[maxNumberOfAllowedLabels]string]float64)
 }
 
