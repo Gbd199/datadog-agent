@@ -725,7 +725,7 @@ func TestOTLPHostname(t *testing.T) {
 func TestOTLPReceiver(t *testing.T) {
 	t.Run("New", func(t *testing.T) {
 		cfg := NewTestConfig(t)
-		assert.NotNil(t, NewOTLPReceiver(nil, cfg, &statsd.NoOpClient{}, &timing.NoopReporter{}).conf)
+		assert.NotNil(t, NewOTLPReceiver(nil, cfg, &statsd.NoOpClient{}, &timing.NoopReporter{}).Conf)
 	})
 
 	t.Run("Start/nil", func(t *testing.T) {
@@ -1610,7 +1610,7 @@ func TestOTLPConvertSpan(t *testing.T) {
 			assert.Equal(want, got, i)
 
 			// test new top-level identification feature flag
-			o.conf.Features["enable_otlp_compute_top_level_by_span_kind"] = struct{}{}
+			o.Conf.Features["enable_otlp_compute_top_level_by_span_kind"] = struct{}{}
 			got = o.convertSpan(tt.rattr, lib, tt.in)
 			wantMetrics := tt.topLevelOutMetrics
 			if len(wantMetrics) != len(got.Metrics) {
@@ -1619,7 +1619,7 @@ func TestOTLPConvertSpan(t *testing.T) {
 			for k, v := range wantMetrics {
 				assert.Equal(v, got.Metrics[k], fmt.Sprintf("(%d) Metric %v:%v", i, k, v))
 			}
-			delete(o.conf.Features, "enable_otlp_compute_top_level_by_span_kind")
+			delete(o.Conf.Features, "enable_otlp_compute_top_level_by_span_kind")
 		})
 	}
 }

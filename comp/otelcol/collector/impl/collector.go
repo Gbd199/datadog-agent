@@ -25,6 +25,7 @@ import (
 	"github.com/DataDog/datadog-agent/comp/otelcol/otlp/components/exporter/datadogexporter"
 	"github.com/DataDog/datadog-agent/comp/otelcol/otlp/components/processor/infraattributesprocessor"
 	"github.com/DataDog/datadog-agent/comp/otelcol/otlp/datatype"
+	traceagentcomp "github.com/DataDog/datadog-agent/comp/trace/agent"
 	"github.com/DataDog/datadog-agent/pkg/serializer"
 	"github.com/DataDog/datadog-agent/pkg/util/optional"
 )
@@ -47,6 +48,7 @@ type Requires struct {
 	Provider         otelcol.ConfigProvider
 	CollectorContrib collectorcontrib.Component
 	Serializer       serializer.MetricSerializer
+	TraceAgent       traceagentcomp.Component
 	LogsAgent        optional.Option[logsagentpipeline.Component]
 	HostName         hostname.Component
 	Tagger           tagger.Component
@@ -74,9 +76,9 @@ func NewComponent(reqs Requires) (Provides, error) {
 				return otelcol.Factories{}, err
 			}
 			if v, ok := reqs.LogsAgent.Get(); ok {
-				factories.Exporters[datadogexporter.Type] = datadogexporter.NewFactory(reqs.Serializer, v, reqs.HostName)
+				factories.Exporters[datadogexporter.Type] = datadogexporter.NewFactory(reqs.TraceAgent, reqs.Serializer, v, reqs.HostName)
 			} else {
-				factories.Exporters[datadogexporter.Type] = datadogexporter.NewFactory(reqs.Serializer, nil, reqs.HostName)
+				factories.Exporters[datadogexporter.Type] = datadogexporter.NewFactory(reqs.TraceAgent, reqs.Serializer, nil, reqs.HostName)
 			}
 			factories.Processors[infraattributesprocessor.Type] = infraattributesprocessor.NewFactory(reqs.Tagger)
 			return factories, nil

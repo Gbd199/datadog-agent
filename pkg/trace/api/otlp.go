@@ -48,10 +48,12 @@ var _ (ptraceotlp.GRPCServer) = (*OTLPReceiver)(nil)
 // data on two ports for both plain HTTP and gRPC.
 type OTLPReceiver struct {
 	ptraceotlp.UnimplementedGRPCServer
+
+	Conf        *config.AgentConfig // receiver config
+
 	wg          sync.WaitGroup      // waits for a graceful shutdown
 	grpcsrv     *grpc.Server        // the running GRPC server on a started receiver, if enabled
 	out         chan<- *Payload     // the outgoing payload channel
-	conf        *config.AgentConfig // receiver config
 	cidProvider IDProvider          // container ID provider
 	statsd      statsd.ClientInterface
 	timing      timing.Reporter
@@ -64,12 +66,12 @@ func NewOTLPReceiver(out chan<- *Payload, cfg *config.AgentConfig, statsd statsd
 		computeTopLevelBySpanKindVal = 1.0
 	}
 	_ = statsd.Gauge("datadog.trace_agent.otlp.compute_top_level_by_span_kind", computeTopLevelBySpanKindVal, nil, 1)
-	return &OTLPReceiver{out: out, conf: cfg, cidProvider: NewIDProvider(cfg.ContainerProcRoot), statsd: statsd, timing: timing}
+	return &OTLPReceiver{out: out, Conf: cfg, cidProvider: NewIDProvider(cfg.ContainerProcRoot), statsd: statsd, timing: timing}
 }
 
 // Start starts the OTLPReceiver, if any of the servers were configured as active.
 func (o *OTLPReceiver) Start() {
-	cfg := o.conf.OTLPReceiver
+	cfg := o.Conf.OTLPReceiver
 	if cfg.GRPCPort != 0 {
 		ln, err := net.Listen("tcp", fmt.Sprintf("%s:%d", cfg.BindHost, cfg.GRPCPort))
 		if err != nil {
@@ -155,7 +157,7 @@ const knuthFactor = uint64(1111111111111111111)
 
 // samplingRate returns the rate as defined by the probabilistic sampler.
 func (o *OTLPReceiver) samplingRate() float64 {
-	rate := o.conf.OTLPReceiver.ProbabilisticSampling / 100
+	rate := o.Conf.OTLPReceiver.ProbabilisticSampling / 100
 	if rate <= 0 || rate >= 1 {
 		// assume that the user wants to keep the trace since he has sent it from
 		// his SDK and introduced no sampling mechanisms anywhere else.
@@ -184,7 +186,7 @@ func (o *OTLPReceiver) sample(tid uint64) sampler.SamplingPriority {
 func (o *OTLPReceiver) ReceiveResourceSpans(ctx context.Context, rspans ptrace.ResourceSpans, httpHeader http.Header) source.Source {
 	// each rspans is coming from a different resource and should be considered
 	// a separate payload; typically there is only one item in this slice
-	src, srcok := o.conf.OTLPReceiver.AttributesTranslator.ResourceToSource(ctx, rspans.Resource(), traceutil.SignalTypeSet)
+	src, srcok := o.Conf.OTLPReceiver.AttributesTranslator.ResourceToSource(ctx, rspans.Resource(), traceutil.SignalTypeSet)
 	hostFromMap := func(m map[string]string, key string) {
 		// hostFromMap sets the hostname to m[key] if it is set.
 		if v, ok := m[key]; ok {
@@ -263,10 +265,10 @@ func (o *OTLPReceiver) ReceiveResourceSpans(ctx context.Context, rspans ptrace.R
 	p := Payload{
 		Source:                 tagstats,
 		ClientComputedStats:    rattr[keyStatsComputed] != "" || httpHeader.Get(header.ComputedStats) != "",
-		ClientComputedTopLevel: o.conf.HasFeature("enable_otlp_compute_top_level_by_span_kind") || httpHeader.Get(header.ComputedTopLevel) != "",
+		ClientComputedTopLevel: o.Conf.HasFeature("enable_otlp_compute_top_level_by_span_kind") || httpHeader.Get(header.ComputedTopLevel) != "",
 	}
 	if env == "" {
-		env = o.conf.DefaultEnv
+		env = o.Conf.DefaultEnv
 	}
 
 	// Get the hostname or set to empty if source is empty
@@ -281,7 +283,7 @@ func (o *OTLPReceiver) ReceiveResourceSpans(ctx context.Context, rspans ptrace.R
 		}
 	} else {
 		// fallback hostname
-		hostname = o.conf.Hostname
+		hostname = o.Conf.Hostname
 		src = source.Source{Kind: source.HostnameKind, Identifier: hostname}
 	}
 	p.TracerPayload = &pb.TracerPayload{
@@ -295,7 +297,7 @@ func (o *OTLPReceiver) ReceiveResourceSpans(ctx context.Context, rspans ptrace.R
 	}
 	ctags := attributes.ContainerTagsFromResourceAttributes(attr)
 	payloadTags := flatten(ctags)
-	if tags := getContainerTags(o.conf.ContainerTags, containerID); tags != "" {
+	if tags := getContainerTags(o.Conf.ContainerTags, containerID); tags != "" {
 		appendTags(payloadTags, tags)
 	} else {
 		// we couldn't obtain any container tags
@@ -521,7 +523,7 @@ func (o *OTLPReceiver) convertSpan(rattr map[string]string, lib pcommon.Instrume
 	}
 
 	spanKind := in.Kind()
-	if o.conf.HasFeature("enable_otlp_compute_top_level_by_span_kind") {
+	if o.Conf.HasFeature("enable_otlp_compute_top_level_by_span_kind") {
 		computeTopLevelAndMeasured(span, spanKind)
 	}
 
@@ -603,7 +605,7 @@ func (o *OTLPReceiver) convertSpan(rattr map[string]string, lib pcommon.Instrume
 	status2Error(in.Status(), in.Events(), span)
 	if span.Name == "" {
 		name := in.Name()
-		if !o.conf.OTLPReceiver.SpanNameAsResourceName {
+		if !o.Conf.OTLPReceiver.SpanNameAsResourceName {
 			name = traceutil.OTelSpanKindName(in.Kind())
 			if lib.Name() != "" {
 				name = lib.Name() + "." + name
@@ -611,7 +613,7 @@ func (o *OTLPReceiver) convertSpan(rattr map[string]string, lib pcommon.Instrume
 				name = "opentelemetry." + name
 			}
 		}
-		if v, ok := o.conf.OTLPReceiver.SpanNameRemappings[name]; ok {
+		if v, ok := o.Conf.OTLPReceiver.SpanNameRemappings[name]; ok {
 			name = v
 		}
 		span.Name = name
