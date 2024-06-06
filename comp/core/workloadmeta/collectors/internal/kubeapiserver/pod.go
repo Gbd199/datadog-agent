@@ -101,6 +101,8 @@ func (p podParser) Parse(obj interface{}) workloadmeta.Entity {
 		}
 	}
 
+	filteredAnnotations := filterMapStringKey(pod.Annotations, p.annotationsFilter)
+
 	return &workloadmeta.KubernetesPod{
 		EntityID: workloadmeta.EntityID{
 			Kind: workloadmeta.KindKubernetesPod,
@@ -109,7 +111,7 @@ func (p podParser) Parse(obj interface{}) workloadmeta.Entity {
 		EntityMeta: workloadmeta.EntityMeta{
 			Name:        pod.Name,
 			Namespace:   pod.Namespace,
-			Annotations: filterMapStringKey(pod.Annotations, p.annotationsFilter),
+			Annotations: filteredAnnotations,
 			Labels:      pod.Labels,
 		},
 		Phase:                      string(pod.Status.Phase),
