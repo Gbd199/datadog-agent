@@ -259,7 +259,17 @@ new-e2e-unit-tests:
     # Use S3 backend
     - pulumi login "s3://dd-pulumi-state?region=us-east-1&awssdk=v2&profile=$AWS_PROFILE"
   script:
+    - !reference [.retrieve_linux_go_tools_deps]
+    - inv -e install-tools
+    - FAST_TESTS_FLAG=""
+    - if [[ "$FAST_TESTS" == "true" ]]; then FAST_TESTS_FLAG="--only-impacted-packages"; fi
+    - inv -e sds.build-library
+    # Upload coverage files to Codecov. Never fail on coverage upload.
+    - export CODECOV_TOKEN=$($CI_PROJECT_DIR/tools/ci/aws_ssm_get_wrapper.sh $CODECOV_TOKEN_SSM_NAME)
+    - inv -e codecov || true
+    - inv -e gitlab.generate-ci-visibility-links --output=$EXTERNAL_LINKS_PATH
     - inv -e new-e2e-tests.run --targets ./pkg/utils --junit-tar junit-${CI_JOB_ID}.tgz ${EXTRA_PARAMS}
+
   after_script:
     - $CI_PROJECT_DIR/tools/ci/junit_upload.sh
   variables:
