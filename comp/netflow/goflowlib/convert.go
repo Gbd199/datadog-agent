@@ -15,7 +15,7 @@ import (
 )
 
 // ConvertFlow convert goflow flow structure to internal flow structure // JMWFLOW
-func ConvertFlow(srcFlow *flowpb.FlowMessage, namespace string) *common.Flow { // JMWN ConvertFlow
+func ConvertFlow(srcFlow *flowpb.FlowMessage, namespace string) *common.Flow { // JMWN ConvertFlow - convert goflow flow structure to internal flow structure
 	return &common.Flow{
 		Namespace:       namespace,
 		FlowType:        convertFlowType(srcFlow.Type),
@@ -42,7 +42,7 @@ func ConvertFlow(srcFlow *flowpb.FlowMessage, namespace string) *common.Flow { /
 		Tos:             srcFlow.IpTos,
 		NextHop:         srcFlow.NextHop,
 		TCPFlags:        srcFlow.TcpFlags,
-		// JMWJMW attempt to get src/dst rDNS domain enrichment here, or trigger rDNS query and then add the enrichment later?
+		// JMWJMW attempt to get src/dst rDNS domain enrichment here, or trigger rDNS query thru rDNS cache and then add the enrichment later?
 	}
 }
 

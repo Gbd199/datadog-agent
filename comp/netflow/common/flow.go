@@ -15,8 +15,7 @@ import (
 
 // Flow contains flow info used for aggregation
 // json annotations are used in AsJSONString() for debugging purpose
-// JMWFLOW
-type Flow struct {
+type Flow struct { // JMWFLOW
 	Namespace    string
 	FlowType     FlowType
 	SequenceNum  uint32
@@ -67,6 +66,7 @@ type Flow struct {
 	// JMWADDED
 	// Reverse DNS enrichement JMW OR add to AdditionalFields?
 	// JMW these do not come from the FlowMessage, but are enrichments added during flow aggregation processing
+	// JMWJMWNAME - domain? host? domain_name? host_name? rdns_domain? rdns_host? rdns_domain_name? rdns_host_name?
 	SrcRdnsDomain string
 	DstRdnsDomain string
 
@@ -122,12 +122,12 @@ var (
 		"source.port": Integer,
 		"source.mac":  Integer,
 		"source.mask": Integer,
-		// JMW add source.rdns_domain
+		// JMW add source.rdns_domain - NO - cuz it's not an additional field, its an enrichment
 		"destination.ip":   Hex,
 		"destination.port": Integer,
 		"destination.mac":  Integer,
 		"destination.mask": Integer,
-		// JMW add destination.rdns_domain
+		// JMW add destination.rdns_domain - NO - cuz it's not an additional field, its an enrichment
 		"ingress.interface": Integer,
 		"egress.interface":  Integer,
 		"tcp_flags":         Integer,
