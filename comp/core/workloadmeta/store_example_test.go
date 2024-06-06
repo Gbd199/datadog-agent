@@ -25,13 +25,7 @@ func TestExampleStoreSubscribe(t *testing.T) {
 
 	s := newWorkloadmetaObject(deps)
 
-	filterParams := FilterParams{
-		Kinds:     []Kind{KindContainer},
-		Source:    SourceRuntime,
-		EventType: EventTypeAll,
-	}
-	filter := NewFilter(&filterParams)
-
+	filter := NewFilterBuilder().SetSource(SourceRuntime).AddKind(KindContainer).Build()
 	ch := s.Subscribe("test", NormalPriority, filter)
 
 	go func() {
