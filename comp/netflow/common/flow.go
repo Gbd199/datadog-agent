@@ -67,8 +67,8 @@ type Flow struct { // JMWFLOW
 	// Reverse DNS enrichement JMW OR add to AdditionalFields?
 	// JMW these do not come from the FlowMessage, but are enrichments added during flow aggregation processing
 	// JMWJMWNAME - domain? host? domain_name? host_name? rdns_domain? rdns_host? rdns_domain_name? rdns_host_name?
-	SrcRdnsDomain string
-	DstRdnsDomain string
+	SrcRdnsHostname string
+	DstRdnsHostname string
 
 	// Ethernet information
 	Tos uint32 // FLOW KEY

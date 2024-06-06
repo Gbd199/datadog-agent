@@ -83,7 +83,7 @@ func NewFlowAggregator(sender sender.Sender, epForwarder eventplatform.Forwarder
 	rollupTrackerRefreshInterval := time.Duration(config.AggregatorRollupTrackerRefreshInterval) * time.Second
 	return &FlowAggregator{
 		flowIn:                       make(chan *common.Flow, config.AggregatorBufferSize),
-		flowAcc:                      newFlowAccumulator(flushInterval, flowContextTTL, config.AggregatorPortRollupThreshold, config.AggregatorPortRollupDisabled, logger),
+		flowAcc:                      newFlowAccumulator(flushInterval, flowContextTTL, config.AggregatorPortRollupThreshold, config.AggregatorPortRollupDisabled, logger), // JMWFRI pass cachedquerier here?
 		FlushFlowsToSendInterval:     flushFlowsToSendInterval,
 		rollupTrackerRefreshInterval: rollupTrackerRefreshInterval,
 		sender:                       sender,
@@ -129,14 +129,16 @@ func (agg *FlowAggregator) run() {
 			return
 		case flow := <-agg.flowIn:
 			agg.receivedFlowCount.Inc()
+			// JMWFRI do rDNSCache.PreFetch here?  Can we only do prefetch if it's the first time we've seen this flow?  If so that would need to be from the flowAccumulator.  OR add a return value to agg.flowAcc.add(flow) to indicate if it's a new flow or not?
 			agg.flowAcc.add(flow) // JMW1 add the flow to the agg.flowAcc
 		}
 	}
 }
 
-func (agg *FlowAggregator) sendFlows(flows []*common.Flow, flushTime time.Time) {
+func (agg *FlowAggregator) sendFlows(flows []*common.Flow, flushTime time.Time) { // JMW6
 	for _, flow := range flows {
-		flowPayload := buildPayload(flow, agg.hostname, flushTime)
+		// JMWFRI - here we call buildPayload with agg.hostname and flushTime (we don't add them to the flow struct) - should we pass reverse DNS enrichement info here too?  or add it to the flow struct?
+		flowPayload := buildPayload(flow, agg.hostname, flushTime) // JMW7
 
 		// Calling MarshalJSON directly as it's faster than calling json.Marshall
 		payloadBytes, err := flowPayload.MarshalJSON()
@@ -144,8 +146,7 @@ func (agg *FlowAggregator) sendFlows(flows []*common.Flow, flushTime time.Time) 
 			agg.logger.Errorf("Error marshalling device metadata: %s", err)
 			continue
 		}
-
-		agg.logger.Infof("JMW flushed flow: %s", string(payloadBytes))
+		agg.logger.Infof("JMW flushing flow: %s", string(payloadBytes))
 		agg.logger.Tracef("flushed flow: %s", string(payloadBytes))
 
 		m := message.NewMessage(payloadBytes, nil, "", 0)
@@ -252,7 +253,7 @@ func (agg *FlowAggregator) flushLoop() {
 func (agg *FlowAggregator) flush() int {
 	flowsContexts := agg.flowAcc.getFlowContextCount()
 	flushTime := agg.TimeNowFunction()
-	flowsToFlush := agg.flowAcc.flush()
+	flowsToFlush := agg.flowAcc.flush() // JMW5
 	agg.logger.Debugf("Flushing %d flows to the forwarder (flush_duration=%d, flow_contexts_before_flush=%d)", len(flowsToFlush), time.Since(flushTime).Milliseconds(), flowsContexts)
 
 	sequenceDeltaPerExporter := agg.getSequenceDelta(flowsToFlush)
@@ -267,7 +268,7 @@ func (agg *FlowAggregator) flush() int {
 
 	// TODO: Add flush stats to agent telemetry e.g. aggregator newFlushCountStats()
 	if len(flowsToFlush) > 0 {
-		agg.sendFlows(flowsToFlush, flushTime)
+		agg.sendFlows(flowsToFlush, flushTime) // JMW6
 	}
 	agg.sendExporterMetadata(flowsToFlush, flushTime)
 

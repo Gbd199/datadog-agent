@@ -25,6 +25,14 @@ type Endpoint struct {
 	Mac  string `json:"mac"`
 	Mask string `json:"mask"`
 	// JMW add to Endpoint (similar to where geoip is added in backend) or somewhere else?
+	// JMW make this an Optional field so it's omitted if not queried but included if empty?
+
+	// JMWJMW instead of simply using a string here include a new struct with the fields
+	// JMWJMW hostname and error. This way we can include the error message if the hostname
+	// JMWJMW lookup fails. This is important because the error message will be useful for
+	// JMWJMW debugging and troubleshooting. // JMWCO
+	// JMWFRI ReverseDNSHostname string `json:"reverse_dns_hostname"`
+	// JMWJMW ReverseDnsEnrichment ReverseDnsEnrichment `json:"reverse_dns_enrichment"`
 	// JMWT RdnsDomain string `json:"rdns_domain"`
 }
 
@@ -71,6 +79,7 @@ type FlowPayload struct {
 }
 
 // MarshalJSON Custom marshaller that moves AdditionalFields to the root of the payload
+// JMW make sure this handles reverse dns hostname in source and destination
 func (p FlowPayload) MarshalJSON() ([]byte, error) {
 	fields := map[string]any{
 		"flush_timestamp": p.FlushTimestamp,

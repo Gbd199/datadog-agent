@@ -13,10 +13,10 @@ import (
 	"github.com/DataDog/datadog-agent/comp/netflow/payload"
 )
 
-// JMWJMW add rDNS enrichment to common.Flow and payload.FlowPayload??
+// JMWJMW add rDNS enrichment to common.Flow and payload.FlowPayload??  Or just the payload.FlowPayload??
 // JMWJMW re: tags vs fields, do we even support tags in NetFlow currently?  If not should we add them anyways?
 // JMWJMW build payload.FlowPayload from common.Flow
-func buildPayload(aggFlow *common.Flow, hostname string, flushTime time.Time) payload.FlowPayload { // JMWN
+func buildPayload(aggFlow *common.Flow, hostname string, flushTime time.Time) payload.FlowPayload { // JMW7
 	return payload.FlowPayload{
 		// TODO: Implement Tos
 		FlushTimestamp: flushTime.UnixMilli(),
@@ -42,6 +42,7 @@ func buildPayload(aggFlow *common.Flow, hostname string, flushTime time.Time) pa
 			Mask: format.CIDR(aggFlow.SrcAddr, aggFlow.SrcMask),
 			// JMWJMW instead of adding to common.Flow, only add rDNS enrichment to payload.FlowPayload here?
 			// JMWT RdnsDomain: "jmw-test-source-domain.com",
+			// JMWFRI payload.ReverseDNSEnrichment(aggFlow.SrcAddr),
 		},
 		Destination: payload.Endpoint{
 			IP:   format.IPAddr(aggFlow.DstAddr),
@@ -50,6 +51,7 @@ func buildPayload(aggFlow *common.Flow, hostname string, flushTime time.Time) pa
 			Mask: format.CIDR(aggFlow.DstAddr, aggFlow.DstMask),
 			// JMWJMW instead of adding to common.Flow, only add rDNS enrichment to payload.FlowPayload here?
 			// JMWT RdnsDomain: "jmw-test-destination-domain.com",
+			// JMWFRI payload.ReverseDNSEnrichment(aggFlow.DestAddr), // JMWFRI payload won't have access to the rdnscachedquerier......
 		},
 		Ingress: payload.ObservationPoint{
 			Interface: payload.Interface{

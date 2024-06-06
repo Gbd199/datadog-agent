@@ -74,8 +74,7 @@ func newFlowAccumulator(aggregatorFlushInterval time.Duration, aggregatorFlowCon
 // We need to keep flowContext (contains `nextFlush` and `lastSuccessfulFlush`) after flush
 // to be able to flush at regular interval (`flowFlushInterval`).
 // Example, after a flush, flowContext will have a new nextFlush, that will be the next flush time for new flows being added.
-// JMWFROMHERE
-func (f *flowAccumulator) flush() []*common.Flow {
+func (f *flowAccumulator) flush() []*common.Flow { // JMW5
 	f.flowsMutex.Lock()
 	defer f.flowsMutex.Unlock()
 
@@ -92,6 +91,9 @@ func (f *flowAccumulator) flush() []*common.Flow {
 			continue
 		}
 		if flowCtx.flow != nil {
+			// JMWJMW do the actual enrichment here, if cache has resolved the IP addresses to hostnames
+			// JMW limit - cache TTL must be >= flow aggregation interval - what is the config for that???  What if a customer wants 1 minute TTL for cache and there is a 5 minute aggregation interval?
+			// JMWFRI enrichWithReverseDNS(flowCtx.flow)
 			flowsToFlush = append(flowsToFlush, flowCtx.flow)
 			flowCtx.lastSuccessfulFlush = now
 			flowCtx.flow = nil
@@ -101,6 +103,14 @@ func (f *flowAccumulator) flush() []*common.Flow {
 	}
 	return flowsToFlush
 }
+
+/* JMWFRI should we enrich common.Flow or payload.FlowPayload?
+func enrichWithReverseDNS(flow *common.Flow) {
+	// JMWADD resolveHostnames()
+	flow.SrcRdnsHostname = f.rDNSCache.TryGet(flow.SrcAddr)
+	flow.DstRdnsDomain = f.rDNSCache.TryGet(flow.DstAddr)
+}
+*/
 
 // JMWADD rDNSCache to flowAccumulator
 // JMWADD resolveHostnames()
@@ -127,9 +137,11 @@ func (f *flowAccumulator) add(flowToAdd *common.Flow) { // JMW2
 
 	// JMW - Enabled or Disabled, like portRollupDisabled?
 	// JMW should flowAccumulator resolve hostnames or should it be done before calling add()?  I think goflow sends it to the channel, received in FlowAggregator::run(), and then add() is called.
-	// if f.rDNSEnabled {
-	// 	// Resolve source and destination IP addresses to hostnames JMWCO
-	// 	f.resolveHostnames(flowToAdd) // JMWCO
+	// if !f.rDNSDisabled {
+	// 	// Tell the rDNSCache that we are interested in the source and destination IP addresses
+	// JMWFRI move to FlowAggregator?
+	// JMWFRI f.rDNSCache.PreFetch(SrcAddr)
+	// JMWFRI f.rDNSCache.PreFetch(DestAddr)
 	// }
 
 	f.flowsMutex.Lock()
@@ -139,6 +151,9 @@ func (f *flowAccumulator) add(flowToAdd *common.Flow) { // JMW2
 	aggFlow, ok := f.flows[aggHash]
 	if !ok {
 		f.flows[aggHash] = newFlowContext(flowToAdd)
+		// JMWFRI - can/should we do this here?  (w/ defer so it's done after the lock is released)
+		// JMWJMW but aren't defers done in reverse order?  so the lock would still be held when this is called?  Instead, can I defer a function that uses variables that aren't set until here?
+		// JMWFRI defer rdnscache.PreFetch(flowToAdd.SrcAddr, flowToAdd.DstAddr)
 		return
 	}
 	if aggFlow.flow == nil {
