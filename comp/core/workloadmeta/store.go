@@ -635,9 +635,13 @@ func (w *workloadmeta) handleEvents(evs []CollectorEvent) {
 	}
 
 	for _, ev := range evs {
-		entityID := ev.Entity.GetID()
+		entityID := EntityID{
+			Kind: ev.Entity.GetID().Kind,
+			ID:   ev.Entity.GetID().ID,
+		}
+		source := ev.Source
 
-		telemetry.EventsReceived.Inc(string(entityID.Kind), string(ev.Source))
+		telemetry.EventsReceived.Inc(string(entityID.Kind), string(source))
 
 		entitiesOfKind, ok := w.store[entityID.Kind]
 		if !ok {
@@ -659,7 +663,7 @@ func (w *workloadmeta) handleEvents(evs []CollectorEvent) {
 			if !found {
 				telemetry.StoredEntities.Inc(
 					string(entityID.Kind),
-					string(ev.Source),
+					string(source),
 				)
 			}
 
@@ -678,7 +682,11 @@ func (w *workloadmeta) handleEvents(evs []CollectorEvent) {
 				continue
 			}
 
-			_, sourceOk := cachedEntity.sources[ev.Source]
+			source := ev.Source
+			kind := entityID.Kind
+			id := entityID.ID
+
+			_, sourceOk := cachedEntity.sources[source]
 			if !sourceOk {
 				continue
 			}
@@ -688,15 +696,15 @@ func (w *workloadmeta) handleEvents(evs []CollectorEvent) {
 			c := cachedEntity
 			cachedEntity = c.copy()
 
-			c.unset(ev.Source)
+			c.unset(source)
 
 			telemetry.StoredEntities.Dec(
-				string(entityID.Kind),
-				string(ev.Source),
+				string(kind),
+				string(source),
 			)
 
 			if len(c.sources) == 0 {
-				delete(entitiesOfKind, entityID.ID)
+				delete(entitiesOfKind, id)
 			}
 		default:
 			w.log.Errorf("cannot handle event of type %d. event dump: %+v", ev.Type, ev)

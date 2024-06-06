@@ -20,17 +20,27 @@ import (
 )
 
 func filterMapStringKey(mapInput map[string]string, keyFilters []*regexp.Regexp) map[string]string {
+	if mapInput == nil {
+		return nil
+	}
+
+	out := make(map[string]string)
+
 	for key := range mapInput {
+		exclude := false
 		for _, filter := range keyFilters {
 			if filter.MatchString(key) {
-				delete(mapInput, key)
-				// we can break now since the key is already excluded.
+				exclude = true
 				break
 			}
 		}
+
+		if !exclude {
+			out[key] = mapInput[key]
+		}
 	}
 
-	return mapInput
+	return out
 }
 
 func parseFilters(annotationsExclude []string) ([]*regexp.Regexp, error) {

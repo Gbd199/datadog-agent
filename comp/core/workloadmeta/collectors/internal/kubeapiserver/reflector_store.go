@@ -64,7 +64,13 @@ func (r *reflectorStore) Add(obj interface{}) error {
 		return nil
 	}
 
-	r.seen[string(metaObj.GetUID())] = entity.GetID()
+	entityID := workloadmeta.EntityID{
+		Kind: entity.GetID().Kind,
+		ID:   entity.GetID().ID,
+	}
+
+	uid := metaObj.GetUID()
+	r.seen[string(uid)] = entityID
 	r.wlmetaStore.Notify([]workloadmeta.CollectorEvent{
 		{
 			Type:   workloadmeta.EventTypeSet,
@@ -92,7 +98,8 @@ func (r *reflectorStore) Replace(list []interface{}, _ string) error {
 		if r.filter != nil && r.filter.filteredOut(entity) {
 			continue
 		}
-		entities = append(entities, entityUID{entity, obj.(metav1.Object).GetUID()})
+		uid := obj.(metav1.Object).GetUID()
+		entities = append(entities, entityUID{entity, uid})
 	}
 
 	r.mu.Lock()
@@ -115,7 +122,11 @@ func (r *reflectorStore) Replace(list []interface{}, _ string) error {
 
 		delete(seenBefore, uid)
 
-		seenNow[uid] = entity.GetID()
+		entityID := workloadmeta.EntityID{
+			Kind: entity.GetID().Kind,
+			ID:   entity.GetID().ID,
+		}
+		seenNow[uid] = entityID
 	}
 
 	for _, entityID := range seenBefore {

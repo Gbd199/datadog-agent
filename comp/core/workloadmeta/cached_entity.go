@@ -74,6 +74,12 @@ func (e *cachedEntity) computeCache() {
 
 	e.sortedSources = sources
 
+	// Avoid deep-copying if there's only 1 source
+	if len(e.sortedSources) == 1 {
+		e.cached = e.sources[Source(e.sortedSources[0])]
+		return
+	}
+
 	var merged Entity
 	for _, source := range e.sortedSources {
 		if e, ok := e.sources[Source(source)]; ok {
