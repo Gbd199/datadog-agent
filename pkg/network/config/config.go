@@ -288,6 +288,9 @@ type Config struct {
 	// Defaults to true. Setting this to false on a Kernel that supports ring
 	// buffers (>=5.8) will result in forcing the use of Perf Maps instead.
 	EnableUSMRingBuffers bool
+
+	// TCRawPacketEnabled enable the TC raw packet
+	TCRawPacketEnabled bool
 }
 
 func join(pieces ...string) string {
@@ -303,6 +306,7 @@ func New() *Config {
 		Config: *ebpf.NewConfig(),
 
 		NPMEnabled:               cfg.GetBool(join(netNS, "enabled")),
+		TCRawPacketEnabled:       cfg.GetBool(join(netNS, "tc_raw_packet.enabled")),
 		ServiceMonitoringEnabled: cfg.GetBool(join(smNS, "enabled")),
 
 		CollectTCPv4Conns: cfg.GetBool(join(netNS, "collect_tcp_v4")),
