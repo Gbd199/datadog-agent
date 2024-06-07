@@ -49,12 +49,12 @@ var _ (ptraceotlp.GRPCServer) = (*OTLPReceiver)(nil)
 type OTLPReceiver struct {
 	ptraceotlp.UnimplementedGRPCServer
 
-	Conf        *config.AgentConfig // receiver config
+	Conf *config.AgentConfig // receiver config
 
-	wg          sync.WaitGroup      // waits for a graceful shutdown
-	grpcsrv     *grpc.Server        // the running GRPC server on a started receiver, if enabled
-	out         chan<- *Payload     // the outgoing payload channel
-	cidProvider IDProvider          // container ID provider
+	wg          sync.WaitGroup  // waits for a graceful shutdown
+	grpcsrv     *grpc.Server    // the running GRPC server on a started receiver, if enabled
+	out         chan<- *Payload // the outgoing payload channel
+	cidProvider IDProvider      // container ID provider
 	statsd      statsd.ClientInterface
 	timing      timing.Reporter
 }
