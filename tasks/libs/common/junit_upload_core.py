@@ -200,7 +200,10 @@ def split_junitxml(root_dir: Path, xml_path: Path, codeowners, flaky_tests):
         write_dir = root_dir / f"{owner}_{flavor}"
         if not write_dir.exists():
             write_dir.mkdir()
-        xml.write(write_dir / xml_path.name, encoding="UTF-8", xml_declaration=True)
+        if platform.system() == "Windows":
+            xml.write(write_dir / xml_path.name.replace("out", "win"), encoding="UTF-8", xml_declaration=True)
+        else:
+            xml.write(write_dir / xml_path.name, encoding="UTF-8", xml_declaration=True)
     return len(output_xmls)
 
 
