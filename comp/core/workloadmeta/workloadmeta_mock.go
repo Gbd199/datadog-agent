@@ -81,7 +81,7 @@ func (w *workloadMetaMock) ListContainers() []*Container {
 }
 
 // ListContainersWithFilter returns metadata about the containers that pass the given filter.
-func (w *workloadMetaMock) ListContainersWithFilter(filter ContainerFilterFunc) []*Container {
+func (w *workloadMetaMock) ListContainersWithFilter(filter EntityFilterFunc[*Container]) []*Container {
 	var res []*Container
 
 	for _, container := range w.ListContainers() {
@@ -117,7 +117,7 @@ func (w *workloadMetaMock) ListProcesses() []*Process {
 }
 
 // ListProcessesWithFilter implements workloadMetaMock#ListProcessesWithFilter.
-func (w *workloadMetaMock) ListProcessesWithFilter(filter ProcessFilterFunc) []*Process {
+func (w *workloadMetaMock) ListProcessesWithFilter(filter EntityFilterFunc[*Process]) []*Process {
 	var res []*Process
 
 	for _, process := range w.ListProcesses() {

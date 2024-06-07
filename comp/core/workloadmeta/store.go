@@ -201,7 +201,7 @@ func (w *workloadmeta) ListContainers() []*Container {
 }
 
 // ListContainersWithFilter implements Store#ListContainersWithFilter
-func (w *workloadmeta) ListContainersWithFilter(filter ContainerFilterFunc) []*Container {
+func (w *workloadmeta) ListContainersWithFilter(filter EntityFilterFunc[*Container]) []*Container {
 	entities := w.listEntitiesByKind(KindContainer)
 
 	// Not very efficient
@@ -270,7 +270,7 @@ func (w *workloadmeta) ListProcesses() []*Process {
 }
 
 // ListProcessesWithFilter implements Store#ListProcessesWithFilter
-func (w *workloadmeta) ListProcessesWithFilter(filter ProcessFilterFunc) []*Process {
+func (w *workloadmeta) ListProcessesWithFilter(filter EntityFilterFunc[*Process]) []*Process {
 	entities := w.listEntitiesByKind(KindProcess)
 
 	processes := make([]*Process, 0, len(entities))
