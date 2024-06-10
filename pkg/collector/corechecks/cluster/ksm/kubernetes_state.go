@@ -533,6 +533,7 @@ func (k *KSMCheck) processMetrics(sender sender.Sender, metrics map[string][]ksm
 			// First check for aggregator, because the check use _labels metrics to aggregate values.
 			if aggregator, found := k.metricAggregators[metricFamily.Name]; found {
 				for _, m := range metricFamily.ListMetrics {
+					log.Debugf("%s: %#v", metricFamily.Name, m)
 					aggregator.accumulate(m, labelJoiner)
 				}
 				// Some metrics can be aggregated and consumed as-is or by a transformer.
