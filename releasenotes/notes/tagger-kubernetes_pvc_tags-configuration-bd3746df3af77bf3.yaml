@@ -9,5 +9,5 @@
 enhancements:
   - |
     Implement the kubernetes_persistent_volume_claims_as_tags configuration that allows
-    users to disable persistentvolumeclaim for Kubernetes resources.
+    users to disable PersistentVolumeClaim for Kubernetes resources.
 
