@@ -207,7 +207,7 @@ func defaultLabelJoins() map[string]*JoinsConfigWithoutLabelsMapping {
 		},
 		"kube_cronjob_labels": {
 			LabelsToMatch: getLabelToMatchForKind("cronjob"),
-			LabelsToGet:   append(defaultStandardLabels, []string{"namespace"}...),
+			LabelsToGet:   append(defaultStandardLabels, []string{"namespace", "job_name"}...),
 		},
 		"kube_horizontalpodautoscaler_labels": {
 			LabelsToMatch: getLabelToMatchForKind("horizontalpodautoscaler"),

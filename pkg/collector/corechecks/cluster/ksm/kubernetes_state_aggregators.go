@@ -98,18 +98,13 @@ type resourceAggregator struct {
 	accumulators map[string]map[accumulateKey]float64
 }
 
-type cronJob struct {
-	namespace string
-	name      string
-}
-
 type cronJobState struct {
 	id    int
 	state servicecheck.ServiceCheckStatus
 }
 
 type lastCronJobAggregator struct {
-	accumulator map[cronJob]cronJobState
+	accumulator map[accumulateKey]cronJobState
 }
 
 type lastCronJobCompleteAggregator struct {
@@ -157,7 +152,7 @@ func newResourceValuesAggregator(ddMetricPrefix, ddMetricSuffix, ksmMetricName s
 
 func newLastCronJobAggregator() *lastCronJobAggregator {
 	return &lastCronJobAggregator{
-		accumulator: make(map[cronJob]cronJobState),
+		accumulator: make(map[accumulateKey]cronJobState),
 	}
 }
 
@@ -183,14 +178,14 @@ func (a *resourceAggregator) accumulate(metric ksmstore.DDMetric, lj *labelJoine
 }
 
 func (a *lastCronJobCompleteAggregator) accumulate(metric ksmstore.DDMetric, lj *labelJoiner) {
-	a.aggregator.accumulate(metric, servicecheck.ServiceCheckOK)
+	a.aggregator.accumulate(metric, servicecheck.ServiceCheckOK, lj)
 }
 
 func (a *lastCronJobFailedAggregator) accumulate(metric ksmstore.DDMetric, lj *labelJoiner) {
-	a.aggregator.accumulate(metric, servicecheck.ServiceCheckCritical)
+	a.aggregator.accumulate(metric, servicecheck.ServiceCheckCritical, lj)
 }
 
-func (a *lastCronJobAggregator) accumulate(metric ksmstore.DDMetric, state servicecheck.ServiceCheckStatus) {
+func (a *lastCronJobAggregator) accumulate(metric ksmstore.DDMetric, state servicecheck.ServiceCheckStatus, lj *labelJoiner) {
 	if condition, found := metric.Labels["condition"]; !found || condition != "true" {
 		return
 	}
@@ -198,7 +193,7 @@ func (a *lastCronJobAggregator) accumulate(metric ksmstore.DDMetric, state servi
 		return
 	}
 
-	namespace, found := metric.Labels["namespace"]
+	_, found := metric.Labels["namespace"]
 	if !found {
 		return
 	}
@@ -214,8 +209,9 @@ func (a *lastCronJobAggregator) accumulate(metric ksmstore.DDMetric, state servi
 		return
 	}
 
-	if lastCronJob, found := a.accumulator[cronJob{namespace: namespace, name: cronjobName}]; !found || lastCronJob.id < id {
-		a.accumulator[cronJob{namespace: namespace, name: cronjobName}] = cronJobState{
+	accumulateKey := makeAccumulateKey(lj.getLabelsToAdd(metric.Labels))
+	if lastCronJob, found := a.accumulator[accumulateKey]; !found || lastCronJob.id < id {
+		a.accumulator[accumulateKey] = cronJobState{
 			id:    id,
 			state: state,
 		}
@@ -250,20 +246,12 @@ func (a *lastCronJobFailedAggregator) flush(sender sender.Sender, k *KSMCheck, l
 }
 
 func (a *lastCronJobAggregator) flush(sender sender.Sender, k *KSMCheck, labelJoiner *labelJoiner) {
-	for cronjob, state := range a.accumulator {
-		hostname, tags := k.hostnameAndTags(
-			map[string]string{
-				"namespace": cronjob.namespace,
-				"cronjob":   cronjob.name,
-			},
-			labelJoiner,
-			nil,
-		)
-
+	for accumulatorKey, state := range a.accumulator {
+		hostname, tags := k.hostnameAndTags(accumulatorKey.labels(), labelJoiner, map[string]string{"job_name": "cronjob"})
 		sender.ServiceCheck(ksmMetricPrefix+"cronjob.complete", state.state, hostname, tags, "")
 	}
 
-	a.accumulator = make(map[cronJob]cronJobState)
+	a.accumulator = make(map[accumulateKey]cronJobState)
 }
 
 func defaultMetricAggregators() map[string]metricAggregator {
