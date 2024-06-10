@@ -159,7 +159,7 @@ func defaultLabelJoins() map[string]*JoinsConfigWithoutLabelsMapping {
 		},
 		"kube_pod_info": {
 			LabelsToMatch: getLabelToMatchForKind("pod"),
-			LabelsToGet:   []string{"node", "created_by_kind", "created_by_name", "priority_class"},
+			LabelsToGet:   []string{"node", "created_by_kind", "created_by_name", "priority_class", "namespace"},
 		},
 		"kube_persistentvolume_info": {
 			LabelsToMatch: getLabelToMatchForKind("persistentvolume"),
@@ -187,19 +187,35 @@ func defaultLabelJoins() map[string]*JoinsConfigWithoutLabelsMapping {
 		},
 		"kube_daemonset_labels": {
 			LabelsToMatch: getLabelToMatchForKind("daemonset"),
-			LabelsToGet:   defaultStandardLabels,
+			LabelsToGet:   append(defaultStandardLabels, []string{"namespace"}...),
 		},
 		"kube_statefulset_labels": {
 			LabelsToMatch: getLabelToMatchForKind("statefulset"),
-			LabelsToGet:   defaultStandardLabels,
+			LabelsToGet:   append(defaultStandardLabels, []string{"namespace"}...),
 		},
 		"kube_job_labels": {
 			LabelsToMatch: getLabelToMatchForKind("job"),
+			LabelsToGet:   append(defaultStandardLabels, []string{"namespace"}...),
+		},
+		"kube_endpoint_labels": {
+			LabelsToMatch: getLabelToMatchForKind("job"),
 			LabelsToGet:   defaultStandardLabels,
+		},
+		"kube_ingress_labels": {
+			LabelsToMatch: getLabelToMatchForKind("verticalpodautoscaler"),
+			LabelsToGet:   append(defaultStandardLabels, []string{"namespace"}...),
 		},
 		"kube_cronjob_labels": {
 			LabelsToMatch: getLabelToMatchForKind("cronjob"),
-			LabelsToGet:   defaultStandardLabels,
+			LabelsToGet:   append(defaultStandardLabels, []string{"namespace"}...),
+		},
+		"kube_horizontalpodautoscaler_labels": {
+			LabelsToMatch: getLabelToMatchForKind("horizontalpodautoscaler"),
+			LabelsToGet:   append(defaultStandardLabels, []string{"namespace"}...),
+		},
+		"kube_verticalpodautoscaler_labels": {
+			LabelsToMatch: getLabelToMatchForKind("verticalpodautoscaler"),
+			LabelsToGet:   append(defaultStandardLabels, []string{"namespace"}...),
 		},
 		"kube_node_labels": {
 			LabelsToMatch: getLabelToMatchForKind("node"),
@@ -216,11 +232,47 @@ func defaultLabelJoins() map[string]*JoinsConfigWithoutLabelsMapping {
 		},
 		"kube_node_status_allocatable": {
 			LabelsToMatch: getLabelToMatchForKind("node"),
-			LabelsToGet:   []string{"cpu", "memory", "gpu", "mig"},
+			LabelsToGet:   []string{"container_runtime_version", "kernel_version", "kubelet_version", "os_image"},
 		},
 		"kube_node_status_capacity": {
 			LabelsToMatch: getLabelToMatchForKind("node"),
-			LabelsToGet:   []string{"cpu", "memory", "gpu", "mig"},
+			LabelsToGet:   []string{"container_runtime_version", "kernel_version", "kubelet_version", "os_image"},
+		},
+		"kube_configmap_info": {
+			LabelsToMatch: getLabelToMatchForKind("configmap"),
+			LabelsToGet:   append(defaultStandardLabels, []string{"namespace"}...),
+		},
+		"kube_secret_info": {
+			LabelsToMatch: getLabelToMatchForKind("secret"),
+			LabelsToGet:   append(defaultStandardLabels, []string{"namespace"}...),
+		},
+		"kube_persistentvolume_status_phase": {
+			LabelsToMatch: getLabelToMatchForKind("persistentvolume"),
+			LabelsToGet:   append(defaultStandardLabels, []string{"storageclass", "phase"}...),
+		},
+		"kube_service_spec_type": {
+			LabelsToMatch: getLabelToMatchForKind("service"),
+			LabelsToGet:   append(defaultStandardLabels, []string{"namespace", "type"}...),
+		},
+		"kube_namespace_status_phase": {
+			LabelsToMatch: getLabelToMatchForKind("namespace"),
+			LabelsToGet:   append(defaultStandardLabels, []string{"pahse"}...),
+		},
+		"kube_replicaset_owner": {
+			LabelsToMatch: getLabelToMatchForKind("replicaset"),
+			LabelsToGet:   append(defaultStandardLabels, []string{"namespace", "owner_name", "owner_kind"}...),
+		},
+		"kube_job_owner": {
+			LabelsToMatch: getLabelToMatchForKind("job"),
+			LabelsToGet:   append(defaultStandardLabels, []string{"namespace", "owner_name", "owner_kind"}...),
+		},
+		"kube_pod_container_resource_with_owner_tag_requests": {
+			LabelsToMatch: getLabelToMatchForKind("pod"),
+			LabelsToGet:   append(defaultStandardLabels, []string{"namespace", "container", "owner_name", "owner_kind"}...),
+		},
+		"kube_pod_container_resource_with_owner_tag_limits": {
+			LabelsToMatch: getLabelToMatchForKind("pod"),
+			LabelsToGet:   append(defaultStandardLabels, []string{"namespace", "container", "owner_name", "owner_kind"}...),
 		},
 	}
 }
