@@ -28,7 +28,8 @@ type metricAggregator interface {
 const accumulateDelimiter = "|"
 
 // accumulateKey is a key used to accumulate metrics in the aggregator.
-// Go does not allow slices or map as valid map keys, so we use a string representation of the keys and values.
+// Go does not allow slices or map as valid map keys, so we make string instaed of slice of label keys and values.
+// E.g., for labels: {key:"a",value:"1"}, {key:"b",value:"2"}, {key:"c",value:"3"}, the accumulate key will be "a|b|c" and "1|2|3".
 type accumulateKey struct {
 	keys   string
 	values string
@@ -37,6 +38,7 @@ type accumulateKey struct {
 func makeAccumulateKey(labels []label) accumulateKey {
 	keys := make([]string, len(labels))
 	vals := make([]string, len(labels))
+	// Sort labels to ensure the order is deterministic.
 	slices.SortFunc(labels, func(a, b label) int {
 		v := cmp.Compare(a.key, b.key)
 		if v == 0 {
@@ -64,7 +66,6 @@ func (a accumulateKey) labels() map[string]string {
 	}
 	labels := make(map[string]string, len(keys))
 	for i := range keys {
-		// Keys and values must be sorted.
 		labels[keys[i]] = values[i]
 	}
 	return labels
@@ -92,7 +93,6 @@ type resourceAggregator struct {
 	ddMetricPrefix   string
 	ddMetricSuffix   string
 	ksmMetricName    string
-	allowedLabels    []string
 	allowedResources []string
 
 	accumulators map[string]map[accumulateKey]float64
@@ -162,13 +162,11 @@ func newLastCronJobAggregator() *lastCronJobAggregator {
 }
 
 func (a *sumValuesAggregator) accumulate(metric ksmstore.DDMetric, lj *labelJoiner) {
-	ls := lj.getLabelsToAdd(metric.Labels)
-	a.accumulator[makeAccumulateKey(ls)] += metric.Val
+	a.accumulator[makeAccumulateKey(lj.getLabelsToAdd(metric.Labels))] += metric.Val
 }
 
 func (a *countObjectsAggregator) accumulate(metric ksmstore.DDMetric, lj *labelJoiner) {
-	ls := lj.getLabelsToAdd(metric.Labels)
-	a.accumulator[makeAccumulateKey(ls)]++
+	a.accumulator[makeAccumulateKey(lj.getLabelsToAdd(metric.Labels))]++
 }
 
 func (a *resourceAggregator) accumulate(metric ksmstore.DDMetric, lj *labelJoiner) {
@@ -227,8 +225,7 @@ func (a *lastCronJobAggregator) accumulate(metric ksmstore.DDMetric, state servi
 func (a *counterAggregator) flush(sender sender.Sender, k *KSMCheck, labelJoiner *labelJoiner) {
 	for accumulatorKey, count := range a.accumulator {
 		hostname, tags := k.hostnameAndTags(accumulatorKey.labels(), labelJoiner, labelsMapperOverride(a.ksmMetricName))
-		metricName := ksmMetricPrefix + a.ddMetricName
-		sender.Gauge(metricName, count, hostname, tags)
+		sender.Gauge(ksmMetricPrefix+a.ddMetricName, count, hostname, tags)
 	}
 	a.accumulator = make(map[accumulateKey]float64)
 }

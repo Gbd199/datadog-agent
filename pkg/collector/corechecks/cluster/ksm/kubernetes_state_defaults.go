@@ -228,15 +228,15 @@ func defaultLabelJoins() map[string]*JoinsConfigWithoutLabelsMapping {
 		},
 		"kube_node_info": {
 			LabelsToMatch: getLabelToMatchForKind("node"),
-			LabelsToGet:   []string{"container_runtime_version", "kernel_version", "kubelet_version", "os_image"},
+			LabelsToGet:   append(defaultStandardLabels, []string{"container_runtime_version", "kernel_version", "kubelet_version", "os_image"}...),
 		},
 		"kube_node_status_allocatable": {
 			LabelsToMatch: getLabelToMatchForKind("node"),
-			LabelsToGet:   []string{"container_runtime_version", "kernel_version", "kubelet_version", "os_image"},
+			LabelsToGet:   append(defaultStandardLabels, []string{"container_runtime_version", "kernel_version", "kubelet_version", "os_image"}...),
 		},
 		"kube_node_status_capacity": {
 			LabelsToMatch: getLabelToMatchForKind("node"),
-			LabelsToGet:   []string{"container_runtime_version", "kernel_version", "kubelet_version", "os_image"},
+			LabelsToGet:   append(defaultStandardLabels, []string{"container_runtime_version", "kernel_version", "kubelet_version", "os_image"}...),
 		},
 		"kube_configmap_info": {
 			LabelsToMatch: getLabelToMatchForKind("configmap"),
@@ -256,7 +256,7 @@ func defaultLabelJoins() map[string]*JoinsConfigWithoutLabelsMapping {
 		},
 		"kube_namespace_status_phase": {
 			LabelsToMatch: getLabelToMatchForKind("namespace"),
-			LabelsToGet:   append(defaultStandardLabels, []string{"pahse"}...),
+			LabelsToGet:   append(defaultStandardLabels, []string{"phase"}...),
 		},
 		"kube_replicaset_owner": {
 			LabelsToMatch: getLabelToMatchForKind("replicaset"),
