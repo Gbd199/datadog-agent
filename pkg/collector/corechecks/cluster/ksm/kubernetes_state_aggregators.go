@@ -157,14 +157,17 @@ func newLastCronJobAggregator() *lastCronJobAggregator {
 }
 
 func (a *sumValuesAggregator) accumulate(metric ksmstore.DDMetric, lj *labelJoiner) {
+	log.Infof("sumValuesAggregator | %#v", metric)
 	a.accumulator[makeAccumulateKey(lj.getLabelsToAdd(metric.Labels))] += metric.Val
 }
 
 func (a *countObjectsAggregator) accumulate(metric ksmstore.DDMetric, lj *labelJoiner) {
+	log.Infof("countObjectsAggregator | %#v", metric)
 	a.accumulator[makeAccumulateKey(lj.getLabelsToAdd(metric.Labels))]++
 }
 
 func (a *resourceAggregator) accumulate(metric ksmstore.DDMetric, lj *labelJoiner) {
+	log.Infof("resourceAggregator | %#v", metric)
 	resource := renameResource(metric.Labels["resource"])
 
 	if _, ok := a.accumulators[resource]; !ok {
@@ -178,10 +181,12 @@ func (a *resourceAggregator) accumulate(metric ksmstore.DDMetric, lj *labelJoine
 }
 
 func (a *lastCronJobCompleteAggregator) accumulate(metric ksmstore.DDMetric, lj *labelJoiner) {
+	log.Infof("lastCronJobCompleteAggregator | %#v", metric)
 	a.aggregator.accumulate(metric, servicecheck.ServiceCheckOK, lj)
 }
 
 func (a *lastCronJobFailedAggregator) accumulate(metric ksmstore.DDMetric, lj *labelJoiner) {
+	log.Infof("lastCronJobFailedAggregator | %#v", metric)
 	a.aggregator.accumulate(metric, servicecheck.ServiceCheckCritical, lj)
 }
 
